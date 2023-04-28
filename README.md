@@ -1,2 +1,2 @@
 # ElasticSearch_Logstash_and_Kibana
- ElasticSearch_Logstash_and_Kibana
+ ElasticSearch_Logstash_and_Kibana in docker-compose
