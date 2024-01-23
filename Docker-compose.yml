@@ -1,48 +1,44 @@
 version: "3.4"
 services:
   elasticsearch:
-    container_name: es-container
-    image: elasticsearch:8.7.0
+    image: elasticsearch:8.12.0
+    container_name: elasticsearch
     environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
       - xpack.security.enabled=false
-      - "discovery.type=single-node"
-    networks:
-      - es-net
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     ports:
       - 9200:9200
-    volumes:
-       - /usr/share/elasticsearch/data
-       - /path.settings=/path/to/your/logstash/config/dir/
-       - /pipeline/:/usr/share/logstash/pipeline/
+    networks:
+      - network-elk
 
   kibana:
-    container_name: kb-container
-    image: kibana:8.7.0
+    image: kibana:8.12.0
+    container_name: kibana
     environment:
-      - ELASTICSEARCH_HOSTS=http://es-container:9200
-    networks:
-      - es-net
-    depends_on:
-      - elasticsearch
+      ELASTICSEARCH_URL: "http://elasticsearch:9200"
     ports:
       - 5601:5601
-
+    networks:
+      - network-elk
 
   logstash:
-    image: logstash:8.7.0
+    image: logstash:8.12.0
+    container_name: logstash
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
     volumes:
-      - /usr/share/logstash/pipeline/
+      - ./config:/etc/logstash/conf.d
     ports:
       - "5000:5000"
-    environment:
-      - xpack.monitoring.enabled=true
     networks:
-      - es-net
-    depends_on:
-      - elasticsearch
-    links:
-      - elasticsearch
+      - network-elk
 
 networks:
-  es-net:
-    driver: bridge
+  network-elk:
